@@ -1,0 +1,6 @@
+# toute les partie qui permette de faire fonctionner le projet mais qui ne sont pas necessaire pour le fonctionnement sur autre PC
+venv/
+__pycache__/
+*.pyc
+.env
+.vscode/settings.json
