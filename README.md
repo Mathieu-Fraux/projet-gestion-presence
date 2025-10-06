@@ -1,5 +1,3 @@
-# projet-pyton_verification_presence
-
 # Projet  python
 ## systéme de verification de présence
 
