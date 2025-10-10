@@ -12,3 +12,4 @@ platformdirs==4.4.0
 pylint==3.3.9
 pytokens==0.1.10
 tomlkit==0.13.3
+colorama==0.4.6
