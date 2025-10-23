@@ -6,27 +6,17 @@ Pattern attendu: JJ_MM_AAAA_devis*
 # === LIBRAIRIES NÉCESSAIRES ===
 
 import os
-# os: Module pour interagir avec le système de fichiers 
-# Permet de lister, vérifier l'existence et le type
+
 
 import re
-# re:Permet de valider le format des noms de fichiers selon un pattern précis
 
 from colorama import Fore, Style, init
-# colorama: Librairie pour afficher du texte en couleur dans le terminal
-# - Fore: Classe pour définir la couleur du texte
-# - Style: Classe pour réinitialiser le style 
-# - init: Fonction pour initialiser colorama pour Windows
+
 
 # Initialisation de colorama pour Windows
 init(autoreset=True)
 
 
-# === CONFIGURATION ===
-
-# Variable contenant l'emplacement du dossier parent à vérifier
-# Ce dossier doit contenir plusieurs sous-dossiers à analyser
-# MODIFIEZ CETTE VARIABLE pour donner l'emplacement du dossier général
 CHEMIN_DOSSIER_PARENT = "./contrat"
 
 
@@ -39,12 +29,12 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
     
     # === VÉRIFICATION DU DOSSIER PARENT ===
     
-    # Vérifier que le dossier parent existe
+
     if not os.path.exists(chemin_dossier_parent):
         print(f"{Fore.RED}Erreur: Le dossier parent '{chemin_dossier_parent}' n'existe pas.{Style.RESET_ALL}")
         return True
     
-    # Vérifier que le chemin mène bien à un dossier et non un fichier
+
     if not os.path.isdir(chemin_dossier_parent):
         print(f"{Fore.RED}Erreur: '{chemin_dossier_parent}' n'est pas un dossier.{Style.RESET_ALL}")
         return True
