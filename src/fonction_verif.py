@@ -177,7 +177,7 @@ if __name__ == "__main__":
     """
     print(f"Vérification du dossier parent: {CHEMIN_DOSSIER_PARENT}")
     print("-" * 70)
-    
+   
     # Appel de la fonction principale et récupération du résultat
     problemes_detectes = verifier_sousDossier_fichierDevis(CHEMIN_DOSSIER_PARENT)
-    
+  
