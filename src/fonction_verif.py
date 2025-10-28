@@ -7,14 +7,12 @@ Pattern attendu: JJ_MM_AAAA_devis*
 
 import os
 
-
 import re
-
+"""
 from colorama import Fore, Style, init
-
-
 # Initialisation de colorama pour Windows
 init(autoreset=True)
+"""
 
 
 CHEMIN_DOSSIER_PARENT = "./contrat"
@@ -31,12 +29,12 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
     
 
     if not os.path.exists(chemin_dossier_parent):
-        print(f"{Fore.RED}Erreur: Le dossier parent '{chemin_dossier_parent}' n'existe pas.{Style.RESET_ALL}")
+        print(f"Erreur: Le dossier parent '{chemin_dossier_parent}' n'existe pas.")
         return True
     
 
     if not os.path.isdir(chemin_dossier_parent):
-        print(f"{Fore.RED}Erreur: '{chemin_dossier_parent}' n'est pas un dossier.{Style.RESET_ALL}")
+        print(f"Erreur: '{chemin_dossier_parent}' n'est pas un dossier.")
         return True
     
     # === DÉFINITION DU PATTERN DE VALIDATION ===
@@ -58,7 +56,7 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
         ToutSousParents = os.listdir(chemin_dossier_parent)
     # Pas la permission de lire le dossier
     except PermissionError:
-        print(f"{Fore.RED}Erreur: Pas de permission pour lire le dossier parent '{chemin_dossier_parent}'.{Style.RESET_ALL}")
+        print(f"Erreur: Pas de permission pour lire le dossier parent '{chemin_dossier_parent}'.")
         return True
     
     # Filtrer pour ne garder que les sous-dossiers et ne pas lire les fichier
@@ -69,7 +67,7 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
     
     # Vérifier qu'il y a des sous-dossiers
     if not sous_dossiers:
-        print(f"{Fore.RED}Erreur: Aucun sous-dossier trouvé dans '{chemin_dossier_parent}'.{Style.RESET_ALL}")
+        print("Erreur: Aucun sous-dossier trouvé dans '{chemin_dossier_parent}'.")
         return True
     
     # === COMPTEURS GLOBAUX ===
@@ -92,17 +90,17 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
         chemin_primaire = os.path.join(chemin_dossier_parent, dossier)
         
         # Afficher le nom du sous-dossier en cours d'analyse
-        print(f" {Fore.CYAN}{dossier}{Style.RESET_ALL}")
+        print(f" {dossier}")
         print("-------")
         
         # Vérifier que le sous-dossier existe (sécurité supplémentaire)
         if not os.path.exists(chemin_primaire):
-            print(f"  {Fore.RED} Erreur: Le sous-dossier n'existe plus.{Style.RESET_ALL}\n")
+            print(" Erreur: Le sous-dossier n'existe plus.\n")
             continue
         
         # Vérifier que c'est bien un dossier
         if not os.path.isdir(chemin_primaire):
-            print(f"  {Fore.RED}⚠ Erreur: N'est pas un dossier valide.{Style.RESET_ALL}\n")
+            print(" Erreur: N'est pas un dossier valide.\n")
             continue
         
         # === ANALYSE DES FICHIERS DU SOUS-DOSSIER ===
@@ -116,7 +114,7 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
             fichiers = os.listdir(chemin_primaire)
         # Gestion de l'erreur si on n'a pas la permission de lire ce sous-dossier
         except PermissionError:
-            print(f"  {Fore.RED} Erreur: Pas de permission pour lire ce sous-dossier.{Style.RESET_ALL}\n")
+            print(" Erreur: Pas de permission pour lire ce sous-dossier.\n")
             continue
         
         # Parcourir chaque fichier du sous-dossier
@@ -137,14 +135,14 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
         
         # Afficher les fichiers valides trouvés dans ce sous-dossier
         if fichiers_valides:
-            print(f"  {Fore.GREEN} Fichiers valides ({len(fichiers_valides)}):{Style.RESET_ALL}")
+            print(f" Fichiers valides ({len(fichiers_valides)}):")
             # Parcourir et afficher chaque fichier valide
             for fichier in fichiers_valides:
-                print(f"  -{fichier}\n")
+                print(f" -{fichier}\n")
         
         # Afficher les fichiers invalides trouvés dans ce sous-dossier
         if fichiers_invalides:
-            print(f"  {Fore.RED} Fichiers invalides ({len(fichiers_invalides)}):{Style.RESET_ALL}")
+            print(f"   Fichiers invalides ({len(fichiers_invalides)}):")
             # Parcourir et afficher chaque fichier invalide
             for fichier in fichiers_invalides:
                 print(f"  -{fichier}\n")
@@ -152,7 +150,7 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
         
         # Afficher un avertissement si le sous-dossier est vide
         if not fichiers_valides and not fichiers_invalides:
-            print(f"  {Fore.YELLOW} Aucun fichier trouvé dans ce sous-dossier{Style.RESET_ALL}\n")
+            print("Aucun fichier trouvé dans ce sous-dossier\n")
         
         # Mettre à jour les compteurs globaux
         total_fichiers_valides += len(fichiers_valides)
@@ -165,22 +163,9 @@ def verifier_sousDossier_fichierDevis(chemin_dossier_parent):
     print("RÉSUMÉ GLOBAL")
     print("==========")
     print(f"Sous-dossiers analysés: {total_dossiers_analyses}")
-    print(f"Fichiers valides trouvés: {Fore.GREEN}{total_fichiers_valides}{Style.RESET_ALL}")
-    print(f"Fichiers invalides trouvés: {Fore.RED}{total_fichiers_invalides}{Style.RESET_ALL}")
+    print(f"Fichiers valides trouvés: {total_fichiers_valides}")
+    print(f"Fichiers invalides trouvés: {total_fichiers_invalides}")
     print("==========")
-    
-    # === MESSAGE FINAL ===
-    
-    # Déterminer si des problèmes ont été trouvés
-    if total_fichiers_invalides > 0:
-        # Des fichiers invalides ont été trouvés
-        print(f"{Fore.RED}document manquant - {total_fichiers_invalides} fichier(s) invalide(s) trouvé(s){Style.RESET_ALL}")
-        return True  # Retourne True pour indiquer un problème
-    else:
-        # Tout est conforme
-        print(f"{Fore.GREEN}RAS - tous les fichiers devis sont valides{Style.RESET_ALL}")
-        return False  # Retourne False pour indiquer que tout est OK
-
 
 # === EXÉCUTION DU SCRIPT ===
 
