@@ -1,6 +1,10 @@
 """
 Script de vérification de présence de fichiers devis dans plusieurs sous-dossiers
+plusier Pattern et modification pattern, démarage de la fonction depuis le main.
+
 Pattern attendu: JJ_MM_AAAA_devis*
+
+
 """
 
 # === LIBRAIRIES NÉCESSAIRES ===
