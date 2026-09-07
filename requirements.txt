@@ -13,3 +13,4 @@ pylint==3.3.9
 pytokens==0.1.10
 tomlkit==0.13.3
 colorama==0.4.6
+openpyxl>=3.1,<4

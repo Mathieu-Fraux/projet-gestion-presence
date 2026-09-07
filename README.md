@@ -2,7 +2,20 @@
 
 ## systéme de verification de présence
 
-projet qui permet de vérifier la présence de fichier (avec systéme de nommage uniforme) dans un dossier avec un certain nom en ayant donnée l'emplacement(sous windows).
+Application Windows qui vérifie, dans chaque sous-dossier d'un dossier parent, la présence des fichiers attendus puis crée un rapport Excel.
+
+## Lancer l'application
+
+Depuis la racine du projet, installer les dépendances puis lancer :
+
+```powershell
+python -m pip install -r requirements.txt
+python src/main.py
+```
+
+L'interface permet de choisir le dossier parent et l'emplacement complet du rapport `.xlsx`, soit par saisie soit avec l'explorateur Windows. Les configurations enregistrées sont conservées dans `data/recherches.json`.
+
+Trois recherches sont disponibles : nom de fichier exact, texte contenu dans le nom, ou modèle défini depuis un exemple. Dans un modèle, les caractères non déclarés variables sont stricts. La fenêtre de positions propose explicitement les types « chiffre », « lettre », « point », « tiret » et « underscore » : le point `.` et le tiret `-` sont donc bien recherchés comme de vrais caractères.
 
 le but final serait de laisser l'utilisateur dans un UI donner la nomination qu'il veut verifier avec l'emplacement du dossier "parent" dans lequel il peut avoir plusieur dossier et chaque dossier est censée contenir plusieur fichier et l'application permettrait de donner les problémes et la présence ou non des fichier.
 

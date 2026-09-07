@@ -1,14 +1,16 @@
-"""
-# test.py fait pour verifier le bon fonctionnement de l'installation python
+"""Point d'entrée de l'application Windows de vérification de présence."""
 
-print("Hello World!")
-print("Python fonctionne correctement ✓")
+from tkinter import Tk
 
-# Test avec une variable
-nom = "Développeur"
-print(f"Bienvenue {nom} dans votre environnement Python!")
+from ihm.fenetre_principale import FenetrePrincipale
 
-# Test d'une opération simple
-resultat = 10 + 5
-print(f"Test de calcul : 10 + 5 = {resultat}")
-"""
+
+def main() -> None:
+    """Crée la fenêtre Tkinter puis donne le contrôle à l'interface graphique."""
+    racine = Tk()
+    FenetrePrincipale(racine)
+    racine.mainloop()
+
+
+if __name__ == "__main__":
+    main()
