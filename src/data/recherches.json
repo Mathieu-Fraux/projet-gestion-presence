@@ -4,7 +4,7 @@
     "dossier_parent": "C:/Users/441fr/OneDrive/Bureau/travail/projet/projet-gestion-presence/contrat",
     "regles": [
       {
-        "libelle": "Test0.1",
+        "libelle": "Test0.2",
         "mode": "modele",
         "valeur": "22_10_2045_devis de patate",
         "sensible_a_la_casse": false,
@@ -12,6 +12,26 @@
           {
             "debut": 1,
             "fin": 2,
+            "type": "chiffre"
+          },
+          {
+            "debut": 3,
+            "fin": 3,
+            "type": "caractere_special"
+          },
+          {
+            "debut": 4,
+            "fin": 5,
+            "type": "chiffre"
+          },
+          {
+            "debut": 6,
+            "fin": 6,
+            "type": "caractere_special"
+          },
+          {
+            "debut": 7,
+            "fin": 7,
             "type": "chiffre"
           }
         ]

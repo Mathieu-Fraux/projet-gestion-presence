@@ -15,7 +15,6 @@ from core.sauvegardes import charger_recherches, enregistrer_recherches
 
 
 MODES = {
-    "Nom exact": "exact",
     "Texte contenu dans le nom": "contient",
     "Modèle à partir d'un exemple": "modele",
 }
@@ -31,12 +30,14 @@ class FenetrePrincipale:
         self.racine.minsize(900, 650)
         self.file_messages: queue.Queue[tuple[str, Any]] = queue.Queue()
         self.regles: list[dict[str, Any]] = []
+        # Cette liste temporaire reçoit les positions créées dans la fenêtre de modèle.
+        self.regles_positions_en_cours: list[dict[str, Any]] = []
         self.recherches = charger_recherches(Path("data/recherches.json"))
         self.chemin_dossier = StringVar()
         self.chemin_rapport = StringVar()
         self.nom_sauvegarde = StringVar()
         self.libelle = StringVar()
-        self.mode = StringVar(value="Nom exact")
+        self.mode = StringVar(value="Texte contenu dans le nom")
         self.valeur = StringVar()
         self.sensible_casse = BooleanVar(value=False)
         self.statut = StringVar(value="Prêt à configurer une recherche.")
@@ -70,7 +71,7 @@ class FenetrePrincipale:
         regles.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(0, 8))
         for colonne in range(4):
             regles.columnconfigure(colonne, weight=1 if colonne in (0, 2) else 0)
-        ttk.Label(regles, text="Libellé dans le rapport").grid(row=0, column=0, sticky="w")
+        ttk.Label(regles, text="Libellé de la recherche").grid(row=0, column=0, sticky="w")
         ttk.Label(regles, text="Méthode").grid(row=0, column=1, sticky="w")
         ttk.Label(regles, text="Nom / texte / exemple").grid(row=0, column=2, sticky="w")
         ttk.Entry(regles, textvariable=self.libelle).grid(row=1, column=0, sticky="ew", padx=(0, 6))
@@ -85,7 +86,11 @@ class FenetrePrincipale:
             self.table_regles.heading(cle, text=titre)
             self.table_regles.column(cle, width=largeur)
         self.table_regles.grid(row=3, column=0, columnspan=3, sticky="ew", pady=(8, 0))
-        ttk.Button(regles, text="Retirer", command=self._retirer_regle).grid(row=3, column=3, sticky="nsew", padx=(6, 0), pady=(8, 0))
+        self.table_regles.bind("<<TreeviewSelect>>", self._charger_regle_selectionnee)
+        actions_regles = ttk.Frame(regles)
+        actions_regles.grid(row=3, column=3, sticky="nsew", padx=(6, 0), pady=(8, 0))
+        ttk.Button(actions_regles, text="Modifier", command=self._modifier_regle).pack(fill="x")
+        ttk.Button(actions_regles, text="Supprimer", command=self._retirer_regle).pack(fill="x", pady=(4, 0))
 
         # Les recherches enregistrées réemploient ensemble le dossier et les règles.
         sauvegardes = ttk.LabelFrame(conteneur, text="Recherches enregistrées", padding=10)
@@ -97,11 +102,12 @@ class FenetrePrincipale:
         self.table_sauvegardes.heading("dossier", text="Dossier parent")
         self.table_sauvegardes.column("nom", width=200)
         self.table_sauvegardes.column("dossier", width=580)
-        self.table_sauvegardes.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 8))
-        ttk.Entry(sauvegardes, textvariable=self.nom_sauvegarde).grid(row=0, column=1, sticky="ew")
-        ttk.Button(sauvegardes, text="Enregistrer", command=self._enregistrer_configuration).grid(row=0, column=2, padx=(6, 0))
-        ttk.Button(sauvegardes, text="Charger", command=self._charger_configuration).grid(row=1, column=1, pady=(6, 0), sticky="ew")
-        ttk.Button(sauvegardes, text="Supprimer", command=self._supprimer_configuration).grid(row=1, column=2, pady=(6, 0), padx=(6, 0))
+        self.table_sauvegardes.grid(row=0, column=0, rowspan=3, sticky="nsew", padx=(0, 8))
+        ttk.Label(sauvegardes, text="Nom de la sauvegarde").grid(row=0, column=1, columnspan=2, sticky="w")
+        ttk.Entry(sauvegardes, textvariable=self.nom_sauvegarde).grid(row=1, column=1, sticky="ew", pady=(2, 0))
+        ttk.Button(sauvegardes, text="Enregistrer", command=self._enregistrer_configuration).grid(row=1, column=2, padx=(6, 0), pady=(2, 0))
+        ttk.Button(sauvegardes, text="Charger", command=self._charger_configuration).grid(row=2, column=1, pady=(6, 0), sticky="ew")
+        ttk.Button(sauvegardes, text="Supprimer", command=self._supprimer_configuration).grid(row=2, column=2, pady=(6, 0), padx=(6, 0))
 
         bas = ttk.Frame(conteneur)
         bas.grid(row=4, column=0, columnspan=3, sticky="ew")
@@ -149,6 +155,37 @@ class FenetrePrincipale:
             del self.regles[int(selection[0])]
             self._rafraichir_regles()
 
+    def _modifier_regle(self) -> None:
+        """Remplace la règle sélectionnée par les valeurs actuellement saisies."""
+        selection = self.table_regles.selection()
+        if not selection:
+            messagebox.showinfo("Sélection requise", "Sélectionnez une ligne à modifier.")
+            return
+        if not self.libelle.get().strip() or not self.valeur.get().strip():
+            messagebox.showwarning("Information manquante", "Renseignez le libellé et la règle du fichier.")
+            return
+        index = int(selection[0])
+        positions = getattr(self, "regles_positions_en_cours", self.regles[index].get("regles_positions", []))
+        self.regles[index] = {
+            "libelle": self.libelle.get().strip(), "mode": MODES[self.mode.get()],
+            "valeur": self.valeur.get().strip(), "sensible_a_la_casse": self.sensible_casse.get(),
+            "regles_positions": positions,
+        }
+        self.regles_positions_en_cours = []
+        self._rafraichir_regles()
+
+    def _charger_regle_selectionnee(self, _evenement: object) -> None:
+        """Place les données d'une règle dans le formulaire pour pouvoir les modifier."""
+        selection = self.table_regles.selection()
+        if not selection:
+            return
+        regle = self.regles[int(selection[0])]
+        self.libelle.set(regle["libelle"])
+        self.mode.set(next(nom for nom, cle in MODES.items() if cle == regle["mode"]))
+        self.valeur.set(regle["valeur"])
+        self.sensible_casse.set(regle.get("sensible_a_la_casse", False))
+        self.regles_positions_en_cours = deepcopy(regle.get("regles_positions", []))
+
     def _rafraichir_regles(self) -> None:
         """Redessine le tableau après un ajout, une suppression ou un chargement."""
         self.table_regles.delete(*self.table_regles.get_children())
@@ -161,13 +198,16 @@ class FenetrePrincipale:
         if self.mode.get() != "Modèle à partir d'un exemple" or not self.valeur.get().strip():
             messagebox.showinfo("Modèle requis", "Choisissez le mode modèle et saisissez d'abord un exemple.")
             return
-        PositionsDialog(self.racine, self, len(self.valeur.get().strip()))
+        PositionsDialog(self.racine, self, self.valeur.get().strip())
 
     def _enregistrer_configuration(self) -> None:
         """Ajoute ou remplace une recherche complète dans data/recherches.json."""
         nom = self.nom_sauvegarde.get().strip()
-        if not nom or not self.chemin_dossier.get().strip() or not self.regles:
-            messagebox.showwarning("Information manquante", "Nom, dossier parent et au moins une règle sont nécessaires.")
+        if not nom:
+            messagebox.showwarning("Nom de sauvegarde requis", "Donnez un nom à cette sauvegarde avant de l'enregistrer.")
+            return
+        if not self.chemin_dossier.get().strip() or not self.regles:
+            messagebox.showwarning("Information manquante", "Le dossier parent et au moins une règle sont nécessaires.")
             return
         configuration = {"nom": nom, "dossier_parent": self.chemin_dossier.get().strip(), "regles": self.regles}
         self.recherches = [item for item in self.recherches if item["nom"] != nom] + [configuration]
@@ -258,47 +298,136 @@ class FenetrePrincipale:
 
 
 class PositionsDialog:
-    """Petite fenêtre qui transforme des plages de positions en règles variables."""
+    """Fenêtre qui associe les portions importantes d'un exemple à leur type."""
 
-    def __init__(self, parent: Tk, application: FenetrePrincipale, longueur_exemple: int) -> None:
-        """Affiche les entrées de début, fin et type pour un modèle."""
-        self.application = application
+    def __init__(self, parent: Tk, application: FenetrePrincipale, exemple: str) -> None:
+        """Affiche le tableau de l'exemple et les saisies pour les positions."""
+        self.application, self.exemple = application, exemple
         self.fenetre = Toplevel(parent)
-        self.fenetre.title("Positions variables")
-        self.debut, self.fin, self.type_position = StringVar(), StringVar(), StringVar(value="chiffre")
-        ttk.Label(self.fenetre, text=f"Exemple de {longueur_exemple} caractères. Positions : 1 à {longueur_exemple}.").pack(padx=12, pady=(12, 4))
-        ligne = ttk.Frame(self.fenetre, padding=12)
-        ligne.pack(fill="x")
-        ttk.Label(ligne, text="Début").grid(row=0, column=0)
-        ttk.Entry(ligne, textvariable=self.debut, width=7).grid(row=1, column=0, padx=(0, 6))
-        ttk.Label(ligne, text="Fin").grid(row=0, column=1)
-        ttk.Entry(ligne, textvariable=self.fin, width=7).grid(row=1, column=1, padx=(0, 6))
-        ttk.Label(ligne, text="Type").grid(row=0, column=2)
-        ttk.Combobox(
-            ligne, textvariable=self.type_position,
-            values=["chiffre", "lettre", "quelconque", "point", "tiret", "underscore"],
-            state="readonly", width=14,
-        ).grid(row=1, column=2)
-        ttk.Button(ligne, text="Ajouter la position", command=self._ajouter).grid(row=1, column=3, padx=(8, 0))
+        self.fenetre.title("Définition de modèle")
+        self.position_unique, self.debut_plage, self.fin_plage = StringVar(), StringVar(), StringVar()
+        self.type_unique, self.type_plage = StringVar(value="chiffre"), StringVar(value="chiffre")
+
+        ttk.Label(self.fenetre, text="Exemple : chaque colonne relie une position au caractère correspondant.").pack(padx=12, pady=(12, 2), anchor="w")
+        # Les deux lignes demandées rendent la correspondance position/caractère claire.
+        colonnes = [str(index) for index in range(1, len(exemple) + 1)]
+        cadre_table = ttk.Frame(self.fenetre)
+        cadre_table.pack(fill="x", padx=12)
+        self.table_exemple = ttk.Treeview(cadre_table, columns=colonnes, show="tree headings", height=2)
+        self.table_exemple.heading("#0", text="")
+        self.table_exemple.column("#0", width=100, stretch=False)
+        for colonne in colonnes:
+            self.table_exemple.heading(colonne, text=colonne)
+            self.table_exemple.column(colonne, width=35, anchor="center", stretch=False)
+        self.table_exemple.insert("", "end", text="Emplacement", values=colonnes)
+        self.table_exemple.insert("", "end", text="Caractère", values=list(exemple))
+        barre = ttk.Scrollbar(cadre_table, orient="horizontal", command=self.table_exemple.xview)
+        self.table_exemple.configure(xscrollcommand=barre.set)
+        self.table_exemple.pack(fill="x")
+        barre.pack(fill="x")
+
+        types_affiches = ["chiffre", "lettre", "caractère spécial", "exact"]
+        saisie = ttk.LabelFrame(self.fenetre, text="Ajouter ou modifier une partie du modèle", padding=10)
+        saisie.pack(fill="x", padx=12, pady=10)
+        # Première ligne : un seul caractère à une position donnée.
+        ttk.Label(saisie, text="Caractère à un seul emplacement").grid(row=0, column=0, columnspan=3, sticky="w")
+        ttk.Label(saisie, text="Position").grid(row=1, column=0, sticky="w")
+        ttk.Label(saisie, text="Type").grid(row=1, column=1, sticky="w")
+        ttk.Entry(saisie, textvariable=self.position_unique, width=10).grid(row=2, column=0, padx=(0, 6))
+        ttk.Combobox(saisie, textvariable=self.type_unique, values=types_affiches, state="readonly", width=20).grid(row=2, column=1, padx=(0, 6))
+        ttk.Button(saisie, text="Ajouter", command=self._ajouter_unique).grid(row=2, column=2, padx=(0, 18))
+        # Seconde ligne : une plage, pratique pour les nombres de date ou un mot exact.
+        ttk.Label(saisie, text="Plage de positions").grid(row=3, column=0, columnspan=4, sticky="w", pady=(10, 0))
+        ttk.Label(saisie, text="Début").grid(row=4, column=0, sticky="w")
+        ttk.Label(saisie, text="Fin").grid(row=4, column=1, sticky="w")
+        ttk.Label(saisie, text="Type").grid(row=4, column=2, sticky="w")
+        ttk.Entry(saisie, textvariable=self.debut_plage, width=10).grid(row=5, column=0, padx=(0, 6))
+        ttk.Entry(saisie, textvariable=self.fin_plage, width=10).grid(row=5, column=1, padx=(0, 6))
+        ttk.Combobox(saisie, textvariable=self.type_plage, values=types_affiches, state="readonly", width=20).grid(row=5, column=2, padx=(0, 6))
+        ttk.Button(saisie, text="Ajouter", command=self._ajouter_plage).grid(row=5, column=3)
+
         self.liste = ttk.Treeview(self.fenetre, columns=("debut", "fin", "type"), show="headings", height=5)
-        for cle, titre in [("debut", "Début"), ("fin", "Fin"), ("type", "Type")]:
+        for cle, titre in [("debut", "Début"), ("fin", "Fin"), ("type", "Ce qui est recherché")]:
             self.liste.heading(cle, text=titre)
         self.liste.pack(fill="x", padx=12, pady=4)
+        self.liste.bind("<<TreeviewSelect>>", self._charger_selection)
+        actions = ttk.Frame(self.fenetre)
+        actions.pack(fill="x", padx=12)
+        # ttk.Button(actions, text="Modifier la sélection", command=self._modifier).pack(side="left")
+        ttk.Button(actions, text="Supprimer la sélection", command=self._supprimer).pack(side="left", padx=(6, 0))
         ttk.Button(self.fenetre, text="Valider les positions", command=self._valider).pack(pady=(4, 12))
-        self.regles: list[dict[str, Any]] = []
+        self.regles: list[dict[str, Any]] = deepcopy(application.regles_positions_en_cours)
+        self._rafraichir_liste()
 
-    def _ajouter(self) -> None:
-        """Ajoute une plage après vérification de sa forme numérique."""
+    def _creer_regle(self, debut_texte: str, fin_texte: str, type_affiche: str) -> dict[str, Any] | None:
+        """Valide les bornes et transforme le type lisible en valeur interne."""
         try:
-            debut, fin = int(self.debut.get()), int(self.fin.get())
-            if debut < 1 or fin < debut:
+            debut, fin = int(debut_texte), int(fin_texte)
+            if debut < 1 or fin < debut or fin > len(self.exemple):
                 raise ValueError
         except ValueError:
-            messagebox.showwarning("Positions invalides", "Indiquez un début et une fin valides.", parent=self.fenetre)
+            messagebox.showwarning("Positions invalides", f"Indiquez des positions de 1 à {len(self.exemple)}.", parent=self.fenetre)
+            return None
+        types = {"chiffre": "chiffre", "lettre": "lettre", "caractère spécial": "caractere_special", "exact": "exact"}
+        return {"debut": debut, "fin": fin, "type": types[type_affiche]}
+
+    def _ajouter_unique(self) -> None:
+        """Ajoute une règle portant sur un caractère unique."""
+        regle = self._creer_regle(self.position_unique.get(), self.position_unique.get(), self.type_unique.get())
+        if regle:
+            self.regles.append(regle)
+            self._rafraichir_liste()
+
+    def _ajouter_plage(self) -> None:
+        """Ajoute une règle portant sur une plage de caractères de l'exemple."""
+        regle = self._creer_regle(self.debut_plage.get(), self.fin_plage.get(), self.type_plage.get())
+        if regle:
+            self.regles.append(regle)
+            self._rafraichir_liste()
+
+    def _rafraichir_liste(self) -> None:
+        """Redessine le tableau des positions définies après chaque changement."""
+        self.liste.delete(*self.liste.get_children())
+        noms = {"chiffre": "chiffre", "lettre": "lettre", "caractere_special": "caractère spécial", "exact": "exact"}
+        for index, regle in enumerate(self.regles):
+            self.liste.insert("", "end", iid=str(index), values=(regle["debut"], regle["fin"], noms[regle["type"]]))
+
+    def _charger_selection(self, _evenement: object) -> None:
+        """Recopie une ligne sélectionnée dans la zone de saisie adéquate."""
+        selection = self.liste.selection()
+        if not selection:
             return
-        regle = {"debut": debut, "fin": fin, "type": self.type_position.get()}
-        self.regles.append(regle)
-        self.liste.insert("", "end", values=(debut, fin, regle["type"]))
+        regle = self.regles[int(selection[0])]
+        noms = {"chiffre": "chiffre", "lettre": "lettre", "caractere_special": "caractère spécial", "exact": "exact"}
+        if regle["debut"] == regle["fin"]:
+            self.position_unique.set(str(regle["debut"]))
+            self.type_unique.set(noms[regle["type"]])
+        else:
+            self.debut_plage.set(str(regle["debut"]))
+            self.fin_plage.set(str(regle["fin"]))
+            self.type_plage.set(noms[regle["type"]])
+
+    def _modifier(self) -> None:
+        """Remplace la règle sélectionnée par la saisie de ligne unique ou plage."""
+        selection = self.liste.selection()
+        if not selection:
+            messagebox.showinfo("Sélection requise", "Sélectionnez une ligne à modifier.", parent=self.fenetre)
+            return
+        ancienne = self.regles[int(selection[0])]
+        if ancienne["debut"] == ancienne["fin"]:
+            nouvelle = self._creer_regle(self.position_unique.get(), self.position_unique.get(), self.type_unique.get())
+        else:
+            nouvelle = self._creer_regle(self.debut_plage.get(), self.fin_plage.get(), self.type_plage.get())
+        if nouvelle:
+            self.regles[int(selection[0])] = nouvelle
+            self._rafraichir_liste()
+
+    def _supprimer(self) -> None:
+        """Retire une définition de position sélectionnée dans le tableau."""
+        selection = self.liste.selection()
+        if selection:
+            del self.regles[int(selection[0])]
+            self._rafraichir_liste()
 
     def _valider(self) -> None:
         """Transmet les positions au formulaire, où elles seront attachées à la règle."""
