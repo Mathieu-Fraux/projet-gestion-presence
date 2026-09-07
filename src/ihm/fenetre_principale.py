@@ -308,8 +308,9 @@ class PositionsDialog:
         self.position_unique, self.debut_plage, self.fin_plage = StringVar(), StringVar(), StringVar()
         self.type_unique, self.type_plage = StringVar(value="chiffre"), StringVar(value="chiffre")
 
-        ttk.Label(self.fenetre, text="Exemple : chaque colonne relie une position au caractère correspondant.").pack(padx=12, pady=(12, 2), anchor="w")
-        # Les deux lignes demandées rendent la correspondance position/caractère claire.
+        ttk.Label(self.fenetre, text="chaque colonne relie une position au caractère correspondant.").pack(padx=12, pady=(12, 2), anchor="w")
+        # Les numéros sont déjà visibles dans les en-têtes ; la seule ligne de
+        # données affiche donc directement le caractère de chaque position.
         colonnes = [str(index) for index in range(1, len(exemple) + 1)]
         cadre_table = ttk.Frame(self.fenetre)
         cadre_table.pack(fill="x", padx=12)
@@ -317,9 +318,8 @@ class PositionsDialog:
         self.table_exemple.heading("#0", text="")
         self.table_exemple.column("#0", width=100, stretch=False)
         for colonne in colonnes:
-            self.table_exemple.heading(colonne, text=colonne)
+            self.table_exemple.heading(colonne, text="colonne")
             self.table_exemple.column(colonne, width=35, anchor="center", stretch=False)
-        self.table_exemple.insert("", "end", text="Emplacement", values=colonnes)
         self.table_exemple.insert("", "end", text="Caractère", values=list(exemple))
         barre = ttk.Scrollbar(cadre_table, orient="horizontal", command=self.table_exemple.xview)
         self.table_exemple.configure(xscrollcommand=barre.set)

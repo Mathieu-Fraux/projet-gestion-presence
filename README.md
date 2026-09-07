@@ -15,7 +15,7 @@ python src/main.py
 
 L'interface permet de choisir le dossier parent et l'emplacement complet du rapport `.xlsx`, soit par saisie soit avec l'explorateur Windows. Les configurations enregistrées sont conservées dans `data/recherches.json`.
 
-Trois recherches sont disponibles : nom de fichier exact, texte contenu dans le nom, ou modèle défini depuis un exemple. Dans un modèle, les caractères non déclarés variables sont stricts. La fenêtre de positions propose explicitement les types « chiffre », « lettre », « point », « tiret » et « underscore » : le point `.` et le tiret `-` sont donc bien recherchés comme de vrais caractères.
+Deux recherches sont disponibles : texte contenu dans le nom, ou modèle défini depuis un exemple. Dans un modèle, seules les positions ajoutées sont recherchées ; les autres portions peuvent varier. Le fonctionnement détaillé et un exemple complet sont disponibles dans le [guide d'utilisation](GUIDE_UTILISATION.md).
 
 le but final serait de laisser l'utilisateur dans un UI donner la nomination qu'il veut verifier avec l'emplacement du dossier "parent" dans lequel il peut avoir plusieur dossier et chaque dossier est censée contenir plusieur fichier et l'application permettrait de donner les problémes et la présence ou non des fichier.
 
