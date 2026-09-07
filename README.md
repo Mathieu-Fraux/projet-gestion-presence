@@ -33,3 +33,4 @@ Deux recherches sont disponibles : texte contenu dans le nom, ou modèle défini
 ## À faire
 
 - Corriger des bugs.
+- permettre de modifier les recherche a partir du type de fichier (jpeg,txt...)
