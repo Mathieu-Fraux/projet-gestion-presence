@@ -308,17 +308,18 @@ class PositionsDialog:
         self.position_unique, self.debut_plage, self.fin_plage = StringVar(), StringVar(), StringVar()
         self.type_unique, self.type_plage = StringVar(value="chiffre"), StringVar(value="chiffre")
 
-        ttk.Label(self.fenetre, text="chaque colonne relie une position au caractère correspondant.").pack(padx=12, pady=(12, 2), anchor="w")
-        # Les numéros sont déjà visibles dans les en-têtes ; la seule ligne de
-        # données affiche donc directement le caractère de chaque position.
-        colonnes = [str(index) for index in range(1, len(exemple) + 1)]
+        ttk.Label(self.fenetre, text="Chaque colonne relie une position au caractère correspondant.").pack(padx=12, pady=(12, 2), anchor="w")
+        # Les identifiants internes ne sont pas numériques : Tkinter peut
+        # interpréter « 1 », « 2 », etc. comme des références spéciales. Les
+        # numéros sont affichés dans les en-têtes, avec des identifiants sûrs.
+        colonnes = [f"position_{index}" for index in range(1, len(exemple) + 1)]
         cadre_table = ttk.Frame(self.fenetre)
         cadre_table.pack(fill="x", padx=12)
         self.table_exemple = ttk.Treeview(cadre_table, columns=colonnes, show="tree headings", height=2)
-        self.table_exemple.heading("#0", text="")
+        self.table_exemple.heading("#0", text="Emplacement")
         self.table_exemple.column("#0", width=100, stretch=False)
-        for colonne in colonnes:
-            self.table_exemple.heading(colonne, text="colonne")
+        for index, colonne in enumerate(colonnes, start=1):
+            self.table_exemple.heading(colonne, text=str(index))
             self.table_exemple.column(colonne, width=35, anchor="center", stretch=False)
         self.table_exemple.insert("", "end", text="Caractère", values=list(exemple))
         barre = ttk.Scrollbar(cadre_table, orient="horizontal", command=self.table_exemple.xview)

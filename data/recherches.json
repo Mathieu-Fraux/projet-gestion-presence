@@ -1,0 +1,15 @@
+[
+  {
+    "nom": "Recherche_1",
+    "dossier_parent": "C:/",
+    "regles": [
+      {
+        "libelle": "Recherche Devis",
+        "mode": "contient",
+        "valeur": "Devis",
+        "sensible_a_la_casse": false,
+        "regles_positions": []
+      }
+    ]
+  }
+]
